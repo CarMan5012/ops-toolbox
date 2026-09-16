@@ -1,0 +1,2845 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus 数据源",
+      "description": "请选择采集 Istio 标准指标的 Prometheus；资源分析还需 cAdvisor 与 kube-state-metrics。",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "8.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "piechart",
+      "name": "Pie chart",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "bargauge",
+      "name": "Bar gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Grafana 注释",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "id": 100,
+      "type": "row",
+      "title": "网格运行概览",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "请求速率",
+      "description": "每秒服务调用次数，使用自适应滑动窗口。流量高低本身不表示故障。",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval]))",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "无请求 / 不可计算",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "valueSize": 32,
+          "titleSize": 13
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "请求成功率",
+      "description": "HTTP 非 gRPC：2xx / 3xx；gRPC：HTTP 2xx 且 grpc_response_status=0。除以全部请求。4xx、5xx、状态码 0 和未知状态均不算成功；不是业务交易成功率。 颜色阈值为展示参考，不是官方承诺或已配置的告警。",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * ((sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",request_protocol!=\"grpc\",response_code=~\"[23][0-9][0-9]\"}[$__rate_interval])) or (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0)) + (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",request_protocol=\"grpc\",grpc_response_status=\"0\",response_code=~\"2[0-9][0-9]\"}[$__rate_interval])) or (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0))) / (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) > 0)",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "无请求 / 不可计算",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 99
+              },
+              {
+                "color": "green",
+                "value": 99.9
+              }
+            ]
+          },
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "valueSize": 32,
+          "titleSize": 13
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "5xx 错误率",
+      "description": "HTTP 状态码 5xx 的请求占全部请求比例；不覆盖全部 gRPC 失败。仅在总请求存在时补齐缺失错误序列为 0。 颜色阈值为展示参考，不是官方承诺或已配置的告警。",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",response_code=~\"5[0-9][0-9]\"}[$__rate_interval])) or (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0)) / (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) > 0)",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "无请求 / 不可计算",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "valueSize": 32,
+          "titleSize": 13
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "P95 响应延迟",
+      "description": "P95：估算 95% 的调用耗时不超过此值，仍有约 5% 更慢；不是最大耗时。 颜色阈值为展示参考，不是官方承诺或已配置的告警。",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le)(rate(istio_request_duration_milliseconds_bucket{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])))",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "无请求 / 不可计算",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 200
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "valueSize": 32,
+          "titleSize": 13
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "P99 响应延迟",
+      "description": "P99：估算 99% 的调用耗时不超过此值，用于观察少量极慢请求；基于直方图估算。 颜色阈值为展示参考，不是官方承诺或已配置的告警。",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.99, sum by (le)(rate(istio_request_duration_milliseconds_bucket{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])))",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "无请求 / 不可计算",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 2000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "valueSize": 32,
+          "titleSize": 13
+        }
+      }
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "累计请求量",
+      "description": "整个时间选择范围内的调用次数估算值，计数器重置由 increase 处理；不是独立用户数或订单数。",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__range]))",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "无请求 / 不可计算",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "valueSize": 32,
+          "titleSize": 13
+        }
+      }
+    },
+    {
+      "id": 101,
+      "type": "row",
+      "title": "流量与响应分析",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "请求速率趋势",
+      "description": "总量与 5xx 请求速率对照；中断保留断点，不跨缺失数据连线。",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval]))",
+          "legendFormat": "全部请求",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        },
+        {
+          "refId": "B",
+          "expr": "(sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",response_code=~\"5[0-9][0-9]\"}[$__rate_interval])) or (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0))",
+          "legendFormat": "5xx 请求",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "无请求 / 不可计算",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "全部请求"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794F2"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx 请求"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F2495C"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "maxDataPoints": 300
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "响应延迟分位数",
+      "description": "P50 反映中位耗时；P95、P99 观察慢请求。全局分位数先汇总直方图桶后计算，不平均各服务分位数。",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.5, sum by (le)(rate(istio_request_duration_milliseconds_bucket{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])))",
+          "legendFormat": "P50 响应延迟",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le)(rate(istio_request_duration_milliseconds_bucket{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])))",
+          "legendFormat": "P95 响应延迟",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        },
+        {
+          "refId": "C",
+          "expr": "histogram_quantile(0.99, sum by (le)(rate(istio_request_duration_milliseconds_bucket{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])))",
+          "legendFormat": "P99 响应延迟",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "无请求 / 不可计算",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "P50 响应延迟"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794F2"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "P95 响应延迟"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FF9830"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "P99 响应延迟"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F2495C"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "maxDataPoints": 300
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "请求错误率趋势",
+      "description": "4xx、5xx 和无有效 HTTP 响应占全部调用；gRPC 失败率仅以 gRPC 请求为分母，可能与 HTTP 错误重叠，不可相加。",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 16,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",response_code=~\"4[0-9][0-9]\"}[$__rate_interval])) or (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0)) / (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) > 0)",
+          "legendFormat": "4xx 请求占比",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        },
+        {
+          "refId": "B",
+          "expr": "100 * (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",response_code=~\"5[0-9][0-9]\"}[$__rate_interval])) or (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0)) / (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) > 0)",
+          "legendFormat": "5xx 请求占比",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        },
+        {
+          "refId": "C",
+          "expr": "100 * (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",response_code=~\"0|\"}[$__rate_interval])) or (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0)) / (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) > 0)",
+          "legendFormat": "无有效 HTTP 响应",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        },
+        {
+          "refId": "D",
+          "expr": "100 * (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",request_protocol=\"grpc\",grpc_response_status!~\"0|\"}[$__rate_interval])) or (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0)) / (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",request_protocol=\"grpc\"}[$__rate_interval])) > 0)",
+          "legendFormat": "gRPC 非零状态占比",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "无请求 / 不可计算",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "4xx 请求占比"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FF9830"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx 请求占比"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F2495C"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "无有效 HTTP 响应"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#B877D9"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gRPC 非零状态占比"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FADE2A"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "maxDataPoints": 300
+    },
+    {
+      "id": 8,
+      "type": "piechart",
+      "title": "HTTP 响应状态码分布",
+      "description": "按所选时段调用增量统计 HTTP 状态；gRPC 通常也有 HTTP 200，不能据此判断 gRPC 成功。状态码 0 表示没有有效 HTTP 响应。 展示当前筛选与所选时段内实际采集到的全部状态码，不限定 200；未采集到的状态码不补造记录。颜色：1xx 灰色、2xx 绿色、3xx 蓝色、4xx 橙色、5xx 红色、0 紫色。零次请求没有可见扇区。",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "x": 16,
+        "y": 13,
+        "w": 8,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (response_code)(increase(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__range]))",
+          "legendFormat": "HTTP {{response_code}}",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^HTTP 1[0-9]{2}$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8E8E8E"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^HTTP 2[0-9]{2}$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#73BF69"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^HTTP 3[0-9]{2}$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794F2"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^HTTP 4[0-9]{2}$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FF9830"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^HTTP 5[0-9]{2}$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F2495C"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^HTTP 0$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#B877D9"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "HTTP 0"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "HTTP 0 · 无有效响应"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 102,
+      "type": "row",
+      "title": "工作负载分析",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 9,
+          "type": "table",
+          "title": "工作负载请求速率排行",
+          "description": "当前时刻前 10 名，按集群 / 命名空间 / 工作负载区分同名对象；只展示有有效数值的对象。慢请求排名需结合调用量判断。 条形长度用于当前列表内相对比较，不表示容量利用率。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 0,
+            "y": 20,
+            "w": 12,
+            "h": 5
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "topk(10, sum by (destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) > 0)",
+              "legendFormat": "{{destination_cluster}} / {{destination_workload_namespace}} / {{destination_workload}}",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "mappings": [],
+              "noValue": "—",
+              "custom": {
+                "align": "left",
+                "displayMode": "auto"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "请求速率"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "reqps"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  },
+                  {
+                    "id": "min",
+                    "value": 0
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#5794F2"
+                    }
+                  },
+                  {
+                    "id": "custom.displayMode",
+                    "value": "basic"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 180
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "right"
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "sortBy": [
+              {
+                "displayName": "请求速率",
+                "desc": true
+              }
+            ],
+            "footer": {
+              "show": false
+            }
+          },
+          "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "destination_workload",
+                    "destination_workload_namespace",
+                    "destination_cluster",
+                    "Value"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "indexByName": {
+                  "destination_workload": 0,
+                  "destination_workload_namespace": 1,
+                  "destination_cluster": 2,
+                  "Value": 3
+                },
+                "renameByName": {
+                  "destination_workload": "工作负载",
+                  "destination_workload_namespace": "命名空间",
+                  "destination_cluster": "集群",
+                  "Value": "请求速率"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 23,
+          "type": "table",
+          "title": "工作负载 P95 延迟排行",
+          "description": "当前时刻前 10 名，按集群 / 命名空间 / 工作负载区分同名对象；只展示有有效数值的对象。慢请求排名需结合调用量判断。 条形长度用于当前列表内相对比较，不表示容量利用率。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 12,
+            "y": 20,
+            "w": 12,
+            "h": 5
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "topk(10, histogram_quantile(0.95, sum by (le,destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_request_duration_milliseconds_bucket{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval]))) > 0)",
+              "legendFormat": "{{destination_cluster}} / {{destination_workload_namespace}} / {{destination_workload}}",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "mappings": [],
+              "noValue": "—",
+              "custom": {
+                "align": "left",
+                "displayMode": "auto"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P95 延迟"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "ms"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  },
+                  {
+                    "id": "min",
+                    "value": 0
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#5794F2"
+                    }
+                  },
+                  {
+                    "id": "custom.displayMode",
+                    "value": "basic"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 180
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "right"
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "sortBy": [
+              {
+                "displayName": "P95 延迟",
+                "desc": true
+              }
+            ],
+            "footer": {
+              "show": false
+            }
+          },
+          "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "destination_workload",
+                    "destination_workload_namespace",
+                    "destination_cluster",
+                    "Value"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "indexByName": {
+                  "destination_workload": 0,
+                  "destination_workload_namespace": 1,
+                  "destination_cluster": 2,
+                  "Value": 3
+                },
+                "renameByName": {
+                  "destination_workload": "工作负载",
+                  "destination_workload_namespace": "命名空间",
+                  "destination_cluster": "集群",
+                  "Value": "P95 延迟"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "type": "table",
+          "title": "工作负载健康明细",
+          "description": "默认按 5xx 错误率降序；结合成功率、响应耗时与请求量确认影响范围。横线表示无法计算。对象标识含集群 / 命名空间 / 工作负载。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 0,
+            "y": 25,
+            "w": 24,
+            "h": 7
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (workload_key)(label_join((sum by (destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval]))), \"workload_key\", \" / \", \"destination_cluster\", \"destination_workload_namespace\", \"destination_workload\"))",
+              "legendFormat": "",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "refId": "B",
+              "expr": "sum by (workload_key)(label_join((100 * (sum by (destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",response_code=~\"5[0-9][0-9]\"}[$__rate_interval])) or (sum by (destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0)) / (sum by (destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) > 0)), \"workload_key\", \" / \", \"destination_cluster\", \"destination_workload_namespace\", \"destination_workload\"))",
+              "legendFormat": "",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "refId": "C",
+              "expr": "sum by (workload_key)(label_join((100 * ((sum by (destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",request_protocol!=\"grpc\",response_code=~\"[23][0-9][0-9]\"}[$__rate_interval])) or (sum by (destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0)) + (sum by (destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",request_protocol=\"grpc\",grpc_response_status=\"0\",response_code=~\"2[0-9][0-9]\"}[$__rate_interval])) or (sum by (destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0))) / (sum by (destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) > 0)), \"workload_key\", \" / \", \"destination_cluster\", \"destination_workload_namespace\", \"destination_workload\"))",
+              "legendFormat": "",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "refId": "D",
+              "expr": "sum by (workload_key)(label_join((histogram_quantile(0.95, sum by (le,destination_cluster,destination_workload_namespace,destination_workload)(rate(istio_request_duration_milliseconds_bucket{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])))), \"workload_key\", \" / \", \"destination_cluster\", \"destination_workload_namespace\", \"destination_workload\"))",
+              "legendFormat": "",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "mappings": [],
+              "noValue": "—",
+              "custom": {
+                "align": "left",
+                "displayMode": "auto"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "请求速率"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "reqps"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "right"
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "special",
+                        "options": {
+                          "match": "nan",
+                          "result": {
+                            "text": "不可计算",
+                            "color": "gray"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "5xx 错误率"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percent"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "orange",
+                          "value": 0.1
+                        },
+                        {
+                          "color": "red",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.displayMode",
+                    "value": "color-text"
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "right"
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "special",
+                        "options": {
+                          "match": "nan",
+                          "result": {
+                            "text": "不可计算",
+                            "color": "gray"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "thresholds"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "成功率"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percent"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "red",
+                          "value": null
+                        },
+                        {
+                          "color": "orange",
+                          "value": 99
+                        },
+                        {
+                          "color": "green",
+                          "value": 99.9
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.displayMode",
+                    "value": "color-text"
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "right"
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "special",
+                        "options": {
+                          "match": "nan",
+                          "result": {
+                            "text": "不可计算",
+                            "color": "gray"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "thresholds"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P95 响应延迟"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "ms"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "right"
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "special",
+                        "options": {
+                          "match": "nan",
+                          "result": {
+                            "text": "不可计算",
+                            "color": "gray"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "集群 / 命名空间 / 工作负载"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "string"
+                  },
+                  {
+                    "id": "mappings",
+                    "value": []
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "left"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 460
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "5xx 错误率"
+              }
+            ],
+            "footer": {
+              "show": false
+            },
+            "cellHeight": "sm"
+          },
+          "transformations": [
+            {
+              "id": "seriesToColumns",
+              "options": {
+                "byField": "workload_key"
+              }
+            },
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "workload_key",
+                    "Value #A",
+                    "Value #B",
+                    "Value #C",
+                    "Value #D"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Time 1": true,
+                  "Time 2": true,
+                  "Time 3": true,
+                  "Time 4": true
+                },
+                "indexByName": {
+                  "workload_key": 0,
+                  "Value #A": 1,
+                  "Value #B": 2,
+                  "Value #C": 3,
+                  "Value #D": 4
+                },
+                "renameByName": {
+                  "workload_key": "集群 / 命名空间 / 工作负载",
+                  "Value #A": "请求速率",
+                  "Value #B": "5xx 错误率",
+                  "Value #C": "成功率",
+                  "Value #D": "P95 响应延迟"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "type": "row",
+      "title": "服务调用分析",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 11,
+          "type": "table",
+          "title": "服务调用明细｜已识别调用关系",
+          "description": "每行表示一条调用关系，从左到右阅读：调用方向被调用服务发起请求。例如 grafana → prometheus-k8s、20 次/秒，表示该统计窗口内平均每秒约 20 次调用。每秒请求数按当前自适应窗口计算，并非所选时段的累计次数；数量高低不代表健康状态。按每秒请求数降序展示前 10 条，过滤调用方命名空间、调用方工作负载、目标命名空间、目标工作负载或目标服务为 unknown、空字符串或缺失的记录。过滤仅作用于本明细，不改变概览的请求量与成功率。无结果表示没有符合条件的活跃调用关系，不能据此判断没有流量。被调用服务保留完整名称以区分同名服务，支持查看单元格完整内容；集群放在后续列。顶部筛选作用于被调用方工作负载。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 0,
+            "y": 21,
+            "w": 24,
+            "h": 4
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "topk(10, sum by (source_cluster,source_workload_namespace,source_workload,destination_cluster,destination_service)(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",source_workload_namespace!~\"unknown|\",source_workload!~\"unknown|\",destination_workload_namespace!~\"unknown|\",destination_workload!~\"unknown|\",destination_service!~\"unknown|\"}[$__rate_interval])) > 0)",
+              "legendFormat": "{{source_cluster}} / {{source_workload_namespace}} / {{source_workload}} → {{destination_cluster}} / {{destination_service}}",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "mappings": [],
+              "noValue": "—",
+              "custom": {
+                "align": "left",
+                "displayMode": "auto"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "调用方"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "string"
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "left"
+                  },
+                  {
+                    "id": "custom.inspect",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "被调用服务"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "string"
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "left"
+                  },
+                  {
+                    "id": "custom.inspect",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "每秒请求数"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "suffix:次/秒"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  },
+                  {
+                    "id": "min",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.displayMode",
+                    "value": "auto"
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "right"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "调用方命名空间"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "string"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "调用方集群"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "string"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "被调用方集群"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "string"
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "sortBy": [
+              {
+                "displayName": "每秒请求数",
+                "desc": true
+              }
+            ],
+            "footer": {
+              "show": false
+            }
+          },
+          "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "source_workload",
+                    "destination_service",
+                    "source_workload_namespace",
+                    "source_cluster",
+                    "destination_cluster",
+                    "Value"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "indexByName": {
+                  "source_workload": 0,
+                  "source_workload_namespace": 1,
+                  "destination_service": 2,
+                  "Value": 3,
+                  "source_cluster": 4,
+                  "destination_cluster": 5
+                },
+                "renameByName": {
+                  "source_workload": "调用方",
+                  "destination_service": "被调用服务",
+                  "source_workload_namespace": "调用方命名空间",
+                  "source_cluster": "调用方集群",
+                  "destination_cluster": "被调用方集群",
+                  "Value": "每秒请求数"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "type": "row",
+      "title": "资源运行状态",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 15,
+          "type": "timeseries",
+          "title": "容器 CPU 使用量",
+          "description": "统计范围：跟随顶部“命名空间”，展示该范围内全部 Pod，不受“工作负载”筛选影响。CPU、内存来自 cAdvisor，重启来自 kube-state-metrics；缺采集时为空。多集群数据源须先按实际资源集群标签增加筛选。Top 8 随时间变化，整段图例可能超过 8 个。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 0,
+            "y": 22,
+            "w": 8,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "topk(8, sum by(namespace,pod)(rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[$__rate_interval])))",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "instant": false,
+              "range": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "cores",
+              "decimals": 2,
+              "min": 0,
+              "noValue": "暂无数据",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "无请求 / 不可计算",
+                      "color": "gray"
+                    }
+                  }
+                }
+              ],
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false,
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "maxDataPoints": 300
+        },
+        {
+          "id": 24,
+          "type": "timeseries",
+          "title": "容器内存工作集",
+          "description": "统计范围：跟随顶部“命名空间”，展示该范围内全部 Pod，不受“工作负载”筛选影响。CPU、内存来自 cAdvisor，重启来自 kube-state-metrics；缺采集时为空。多集群数据源须先按实际资源集群标签增加筛选。Top 8 随时间变化，整段图例可能超过 8 个。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 8,
+            "y": 22,
+            "w": 8,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "topk(8, sum by(namespace,pod)(container_memory_working_set_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}))",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "instant": false,
+              "range": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "decimals": 2,
+              "min": 0,
+              "noValue": "暂无数据",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "无请求 / 不可计算",
+                      "color": "gray"
+                    }
+                  }
+                }
+              ],
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false,
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "maxDataPoints": 300
+        },
+        {
+          "id": 16,
+          "type": "timeseries",
+          "title": "容器重启次数｜滚动 15 分钟",
+          "description": "统计范围：跟随顶部“命名空间”，展示该范围内全部 Pod，不受“工作负载”筛选影响。CPU、内存来自 cAdvisor，重启来自 kube-state-metrics；缺采集时为空。多集群数据源须先按实际资源集群标签增加筛选。Top 8 随时间变化，整段图例可能超过 8 个。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 16,
+            "y": 22,
+            "w": 8,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "topk(8, sum by(namespace,pod)(increase(kube_pod_container_status_restarts_total{namespace=~\"${namespace:regex}\"}[15m])))",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "instant": false,
+              "range": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "decimals": 2,
+              "min": 0,
+              "noValue": "暂无数据",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "无请求 / 不可计算",
+                      "color": "gray"
+                    }
+                  }
+                }
+              ],
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false,
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "maxDataPoints": 300
+        }
+      ]
+    },
+    {
+      "id": 105,
+      "type": "row",
+      "title": "通信安全与控制面",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 17,
+          "type": "gauge",
+          "title": "mTLS 请求占比",
+          "description": "当前服务端观测到使用 mTLS 的请求比例。仅反映所选请求，不等于全网连接覆盖率或安全合规结论；无流量不能判定。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 0,
+            "y": 23,
+            "w": 6,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "100 * (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\",connection_security_policy=\"mutual_tls\"}[$__rate_interval])) or (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) * 0)) / (sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval])) > 0)",
+              "legendFormat": "",
+              "instant": true,
+              "range": false,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "decimals": 2,
+              "min": 0,
+              "noValue": "暂无数据",
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "#5794F2"
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "无请求 / 不可计算",
+                      "color": "gray"
+                    }
+                  }
+                }
+              ],
+              "max": 100
+            },
+            "overrides": []
+          },
+          "options": {
+            "showThresholdLabels": false,
+            "showThresholdMarkers": false,
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 18,
+          "type": "timeseries",
+          "title": "xDS 配置推送延迟 P95",
+          "description": "控制面范围：当前 Prometheus 中所有 Istiod，不受业务与资源筛选影响。按配置类型分组，单位秒；无推送时可能无法计算。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 6,
+            "y": 23,
+            "w": 9,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "histogram_quantile(0.95, sum by(le,type)(rate(pilot_xds_push_time_bucket[$__rate_interval])))",
+              "legendFormat": "{{type}} 推送耗时",
+              "instant": false,
+              "range": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 2,
+              "min": 0,
+              "noValue": "暂无数据",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "无请求 / 不可计算",
+                      "color": "gray"
+                    }
+                  }
+                }
+              ],
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false,
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "maxDataPoints": 300
+        },
+        {
+          "id": 19,
+          "type": "timeseries",
+          "title": "xDS 配置推送错误速率",
+          "description": "采用 Istio pilot_xds_pushes 的构建 / 发送错误类型，每秒错误数。此面板不代表 Envoy NACK 拒绝数。旧版或未暴露该指标时为空，请核对运行版本。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 15,
+            "y": 23,
+            "w": 9,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by(type)(rate(pilot_xds_pushes{type=~\".*_(senderr|builderr)\"}[$__rate_interval]))",
+              "legendFormat": "{{type}}",
+              "instant": false,
+              "range": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "decimals": 2,
+              "min": 0,
+              "noValue": "暂无数据",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "无请求 / 不可计算",
+                      "color": "gray"
+                    }
+                  }
+                }
+              ],
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false,
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "maxDataPoints": 300
+        }
+      ]
+    },
+    {
+      "id": 106,
+      "type": "row",
+      "title": "TCP 流量与连接",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 20,
+          "type": "timeseries",
+          "title": "TCP 收发吞吐",
+          "description": "采用服务端观测，跟随顶部命名空间与工作负载筛选；包含数据源中全部集群。仅统计暴露对应 TCP 指标的流量；HTTP 请求指标不能替代 TCP 指标。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 0,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(rate(istio_tcp_sent_bytes_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval]))",
+              "legendFormat": "发送",
+              "instant": false,
+              "range": true,
+              "format": "time_series"
+            },
+            {
+              "refId": "B",
+              "expr": "sum(rate(istio_tcp_received_bytes_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval]))",
+              "legendFormat": "接收",
+              "instant": false,
+              "range": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "decimals": 2,
+              "min": 0,
+              "noValue": "暂无数据",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "无请求 / 不可计算",
+                      "color": "gray"
+                    }
+                  }
+                }
+              ],
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false,
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "maxDataPoints": 300
+        },
+        {
+          "id": 21,
+          "type": "timeseries",
+          "title": "TCP 连接速率",
+          "description": "采用服务端观测，跟随顶部命名空间与工作负载筛选；包含数据源中全部集群。仅统计暴露对应 TCP 指标的流量；HTTP 请求指标不能替代 TCP 指标。",
+          "datasource": "${DS_PROMETHEUS}",
+          "gridPos": {
+            "x": 12,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(rate(istio_tcp_connections_opened_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval]))",
+              "legendFormat": "新建连接",
+              "instant": false,
+              "range": true,
+              "format": "time_series"
+            },
+            {
+              "refId": "B",
+              "expr": "sum(rate(istio_tcp_connections_closed_total{reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload=~\"${workload:regex}\"}[$__rate_interval]))",
+              "legendFormat": "关闭连接",
+              "instant": false,
+              "range": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "decimals": 2,
+              "min": 0,
+              "noValue": "暂无数据",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "无请求 / 不可计算",
+                      "color": "gray"
+                    }
+                  }
+                }
+              ],
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false,
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "maxDataPoints": 300
+        }
+      ]
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 30,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "label": "命名空间",
+        "type": "query",
+        "datasource": "${DS_PROMETHEUS}",
+        "definition": "label_values({__name__=~\"istio_requests_total|istio_tcp_sent_bytes_total|istio_tcp_received_bytes_total|istio_tcp_connections_opened_total|istio_tcp_connections_closed_total\",reporter=\"destination\",destination_workload_namespace!=\"\"}, destination_workload_namespace)",
+        "query": {
+          "query": "label_values({__name__=~\"istio_requests_total|istio_tcp_sent_bytes_total|istio_tcp_received_bytes_total|istio_tcp_connections_opened_total|istio_tcp_connections_closed_total\",reporter=\"destination\",destination_workload_namespace!=\"\"}, destination_workload_namespace)",
+          "refId": "Variable-namespace"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": "全部",
+          "value": "$__all"
+        },
+        "options": [],
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0
+      },
+      {
+        "name": "workload",
+        "label": "工作负载",
+        "type": "query",
+        "datasource": "${DS_PROMETHEUS}",
+        "definition": "label_values({__name__=~\"istio_requests_total|istio_tcp_sent_bytes_total|istio_tcp_received_bytes_total|istio_tcp_connections_opened_total|istio_tcp_connections_closed_total\",reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload!=\"\"}, destination_workload)",
+        "query": {
+          "query": "label_values({__name__=~\"istio_requests_total|istio_tcp_sent_bytes_total|istio_tcp_received_bytes_total|istio_tcp_connections_opened_total|istio_tcp_connections_closed_total\",reporter=\"destination\",destination_workload_namespace=~\"${namespace:regex}\",destination_workload!=\"\"}, destination_workload)",
+          "refId": "Variable-workload"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": "全部",
+          "value": "$__all"
+        },
+        "options": [],
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Istio 总体流量与延迟分析",
+  "uid": "istio-traffic-cn-v5",
+  "version": 2,
+  "description": "Istio 服务网格流量、响应延迟与工作负载健康分析。采用服务端观测口径，提供中文指标说明；顶部按命名空间和工作负载筛选；资源仅跟随命名空间，控制面覆盖全数据源。"
+}
