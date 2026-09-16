@@ -1,6 +1,6 @@
 # Ops Toolbox
 
-> 运维实用工具箱：生产环境排错笔记、自动化运维脚本与现成配置模板沉淀。
+> 运维实用工具箱：生产环境排错笔记、自动化运维脚本、现成配置模板与常用工具沉淀。
 
 ---
 
@@ -17,7 +17,7 @@
   - 📂 [**`cert-renew/`**](scripts/cert-renew/) — SSL/TLS 证书管理与自动化续期脚本
 - 📁 [**`templates/`**](templates/) — 生产级现成配置文件与模板
   - 📂 [**`grafana/`**](templates/grafana/) — Grafana Dashboard 仪表盘配置 (JSON)
-  - 📂 [**`prometheus/`**](templates/prometheus/) — 监控告警规则与抓取配置
+  - 📂 [**`prometheus/`**](templates/prometheus/) — 监控告警规则与配置
 
 ---
 
@@ -34,6 +34,22 @@ ops-toolbox/
     ├── grafana/         # Grafana Dashboard 仪表盘 JSON
     └── prometheus/      # 监控告警规则与配置
 ```
+
+---
+
+## 🧰 推荐运维工具
+
+日常运维中经常会遇到各类受限环境，推荐搭配以下利器使用：
+
+### ⌨️ [ClipType](https://github.com/CarMan5012/ClipType) — 模拟键盘击键的剪贴板注入神器
+
+- **解决痛点**：在 **VNC 虚拟机控制台、云平台救援控制台、IPMI / BMC 远程管理、RDP 远程桌面或受限堡垒机** 中，系统的 `Ctrl + V` 剪贴板共享往往完全失效，导致长密码、公私钥证书、复杂 Shell 单行脚本难以复制输入。
+- **核心原理**：通过底层系统接口**模拟真实的物理键盘敲击**，逐字符将剪贴板文本“打”进当前光标所在的窗口，绕过任何剪贴板管道限制。
+- **运维亮点**：
+  - **多平台原生轻量**：Windows (AHK v2)、Linux (Wayland `wtype` / X11 `xdotool`)、macOS (原生 Swift)。
+  - **缩进与代码安全**：完整保留换行与代码缩进（如 YAML、Python），避免终端自动缩进导致的错乱。
+  - **人性化时序**：支持毫秒级随机延迟与标点微停顿，模拟真实打字节奏。
+  - **安全与可控**：`Esc` 键随时紧急中止，窗口失焦自动刹车，并支持输入完成后自动清空剪贴板，防止密码残留。
 
 ---
 
